@@ -12,6 +12,10 @@
 ![gecit](renders/yay_kirsasi.png)
 R500 + R350 counter-curves, the outer rail rides 150 mm high through both. — *R500 + R350 ters virajlar, dış ray her ikisinde de 150 mm yüksekte.*
 
+### 🚉 İstasyon — peron
+![istasyon](renders/istasyon.png)
+`hat.peron` config adds a raised platform: concrete band, yellow safety line, lamp posts, sign board — all following the track frame. — *`hat.peron` ayarı yükseltilmiş platform açar: beton bant, sarı güvenlik çizgisi, lamba direkleri, tabela — hepsi hat çerçevesini izler.*
+
 ### 🌅 Ova Düzlüğü — sonsuz düz hat
 ![ova](renders/ova_duzlugu.png)
 One-point perspective down a 460 m straight at golden hour, masts marching to the vanishing point. — *Altın saatte 460 m'lik düz hatta tekkacılı perspektif, direkler ufka yürür.*

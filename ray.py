@@ -234,8 +234,120 @@ def hat_kur(patika: Patika, hat_cfg, kok):
             for j, (x, y, z, yuk) in enumerate(aski):
                 kutu(f"Aski{j}", (x, y, z), (0.05, 0.05, yuk), celik_m)
 
+    # ---------------- peron (istasyon platformu)
+    peron_cfg = hat_cfg.get("peron")
+    if peron_cfg:
+        peron_kur(patika, peron_cfg, kok, once)
+
     yeni = set(bpy.data.objects) - once
     for o in yeni:
         if o is not kok:
             o.parent = kok
     return yeni
+
+
+def peron_kur(patika, peron_cfg, kok, once_set):
+    """Platform bandi + sari guvenlik cizgisi + lambalar + tabela.
+    s0..s1 arasi, taraf: +1 sag / -1 sol."""
+    s0, s1 = peron_cfg.get("s0", 0.0), min(peron_cfg.get("s1", 40.0),
+                                           patika.uzunluk)
+    taraf = peron_cfg.get("taraf", 1)
+    p_yuksek = 0.92
+    p_kenar = 1.75   # ray merkezinden platform kenari
+    p_arka = 4.6     # dis kenar
+
+    beton = mat_yap("PeronBeton", (0.52, 0.51, 0.49), rough=0.8)
+    sari = mat_yap("PeronSari", (0.85, 0.65, 0.05), rough=0.6)
+    metal = MAT_CACHE["Catelik"] if "Catelik" in MAT_CACHE else \
+        mat_yap("Catelik", (0.45, 0.46, 0.48), rough=0.5, metalik=0.7)
+    beyaz = mat_yap("TabelaBeyaz", (0.85, 0.85, 0.86), rough=0.5)
+
+    adim = 1.0
+    n = int((s1 - s0) / adim) + 1
+    kesit = [(taraf * p_kenar, 0.0), (taraf * p_arka, 0.0),
+             (taraf * p_arka, p_yuksek), (taraf * p_kenar, p_yuksek)]
+    verts, faces = [], []
+    m = len(kesit)
+    for i in range(n):
+        s = s0 + (s1 - s0) * i / (n - 1)
+        konum, teget, sag, roll = cerceve(patika, s)
+        pts = kesit_dunya(konum, sag, roll, kesit)
+        verts.extend(pts)
+    for i in range(n - 1):
+        for j in range(m):
+            j2 = (j + 1) % m
+            faces.append((i * m + j, i * m + j2, (i + 1) * m + j2, (i + 1) * m + j))
+    mesh = bpy.data.meshes.new("Peron")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    po = bpy.data.objects.new("Peron", mesh)
+    po.data.materials.append(beton)
+    bpy.context.collection.objects.link(po)
+
+    # sari guvenlik cizgisi: ince band platform ustunde
+    cizgi_kesit = [(taraf * (p_kenar + 0.15), p_yuksek + 0.005),
+                   (taraf * (p_kenar + 0.55), p_yuksek + 0.005),
+                   (taraf * (p_kenar + 0.55), p_yuksek + 0.02),
+                   (taraf * (p_kenar + 0.15), p_yuksek + 0.02)]
+    verts, faces = [], []
+    for i in range(n):
+        s = s0 + (s1 - s0) * i / (n - 1)
+        konum, teget, sag, roll = cerceve(patika, s)
+        verts.extend(kesit_dunya(konum, sag, roll, cizgi_kesit))
+    for i in range(n - 1):
+        for j in range(m):
+            j2 = (j + 1) % m
+            faces.append((i * m + j, i * m + j2, (i + 1) * m + j2, (i + 1) * m + j))
+    mesh2 = bpy.data.meshes.new("PeronCizgi")
+    mesh2.from_pydata(verts, [], faces)
+    mesh2.update()
+    co = bpy.data.objects.new("PeronCizgi", mesh2)
+    co.data.materials.append(sari)
+    bpy.context.collection.objects.link(co)
+
+    # lambalar + tabela
+    for i, s in enumerate([s0 + 6.0, (s0 + s1) / 2, s1 - 6.0]):
+        if s > patika.uzunluk:
+            continue
+        konum, teget, sag, roll = cerceve(patika, s)
+        yan = taraf * (p_arka - 0.5)
+        mx, my = konum.x + sag.x * yan, konum.y + sag.y * yan
+        yaw = math.atan2(teget.y, teget.x)
+        direk = kutu(f"PeronLamba{i}", (mx, my, p_yuksek + 2.1),
+                     (0.10, 0.10, 4.2), metal)
+        direk.rotation_euler = (0, 0, yaw - math.pi / 2)
+        kol_uz = 1.3
+        kol = kutu(f"PeronLambaKol{i}",
+                   (mx + sag.x * -taraf * kol_uz / 2,
+                    my + sag.y * -taraf * kol_uz / 2, p_yuksek + 4.1),
+                   (0.08, kol_uz, 0.08), metal)
+        kol.rotation_euler = (0, 0, yaw - math.pi / 2)
+        m_isik = bpy.data.materials.new(f"PeronIsik{i}")
+        m_isik.use_nodes = True
+        nti = m_isik.node_tree
+        nti.nodes.clear()
+        emi = nti.nodes.new("ShaderNodeEmission")
+        emi.inputs["Color"].default_value = (1.0, 0.85, 0.6, 1)
+        emi.inputs["Strength"].default_value = 18.0
+        outi = nti.nodes.new("ShaderNodeOutputMaterial")
+        nti.links.new(emi.outputs["Emission"], outi.inputs["Surface"])
+        bpy.ops.mesh.primitive_uv_sphere_add(
+            radius=0.16, segments=16, ring_count=12,
+            location=(mx + sag.x * -taraf * kol_uz,
+                      my + sag.y * -taraf * kol_uz, p_yuksek + 4.0))
+        kure = bpy.context.active_object
+        kure.name = f"PeronLambaKure{i}"
+        bpy.ops.object.shade_smooth()
+        kure.data.materials.append(m_isik)
+
+    # tabela (iki bacak + panel)
+    s_t = (s0 + s1) / 2
+    konum, teget, sag, roll = cerceve(patika, s_t)
+    yan = taraf * (p_arka - 1.1)
+    mx, my = konum.x + sag.x * yan, konum.y + sag.y * yan
+    yaw = math.atan2(teget.y, teget.x)
+    for dx in (-1.1, 1.1):
+        bac = kutu(f"TabelaBacak{dx}", (mx + teget.x * dx, my + teget.y * dx, p_yuksek + 1.1),
+                   (0.07, 0.07, 2.2), metal)
+    panel = kutu("TabelaPanel", (mx, my, p_yuksek + 2.0), (2.6, 0.08, 0.7), beyaz)
+    panel.rotation_euler = (0, 0, yaw)
