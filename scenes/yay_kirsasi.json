@@ -1,0 +1,95 @@
+{
+  "output": "renders/yay_kirsasi.png",
+  "patika": {
+    "segments": [
+      {
+        "tip": "duz",
+        "uzunluk": 90
+      },
+      {
+        "tip": "viraj",
+        "yaricap": 500,
+        "aci_deg": 40,
+        "yon": 1,
+        "v_kmh": 110
+      },
+      {
+        "tip": "duz",
+        "uzunluk": 60
+      },
+      {
+        "tip": "viraj",
+        "yaricap": 350,
+        "aci_deg": 28,
+        "yon": -1,
+        "v_kmh": 90
+      },
+      {
+        "tip": "duz",
+        "uzunluk": 90
+      }
+    ]
+  },
+  "hat": {
+    "ornek_adim": 0.5,
+    "katoneri_aralik": 50
+  },
+  "zemin": {
+    "color": [
+      0.055,
+      0.065,
+      0.035
+    ],
+    "tepeler": true,
+    "tepe_adet": 12,
+    "tepe_renk": [
+      0.042,
+      0.048,
+      0.048
+    ]
+  },
+  "sun": {
+    "elevation_deg": 14,
+    "azimuth_deg": 160,
+    "strength": 3.5,
+    "color": [
+      1.0,
+      0.88,
+      0.72
+    ],
+    "disk": {
+      "radius": 3.0,
+      "strength": 12,
+      "color": [
+        1.0,
+        0.85,
+        0.6
+      ]
+    }
+  },
+  "sky": {
+    "turbidity": 3.0,
+    "strength": 1.05
+  },
+  "camera": {
+    "mode": "sabit",
+    "position": [
+      55,
+      280,
+      22
+    ],
+    "look_at": [
+      -140,
+      430,
+      0
+    ],
+    "lens": 40
+  },
+  "render": {
+    "width": 1600,
+    "height": 900,
+    "samples": 160,
+    "exposure": 0.35,
+    "look": "Medium High Contrast"
+  }
+}
